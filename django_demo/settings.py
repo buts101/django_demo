@@ -1,3 +1,5 @@
+import pymysql
+pymysql.install_as_MySQLdb()
 """
 Django settings for django_demo project.
 
@@ -25,7 +27,7 @@ SECRET_KEY = 'django-insecure-hwb#ip@b(-8&-h+3m#f6zt-p2uv_5*c)j(0acy!lqq2c9#6b5o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "django.devops.com","192.168.22.99"]
 
 
 # Application definition
@@ -86,7 +88,7 @@ DATABASES = {
         "NAME": "django",
         "USER": "django",
         "PASSWORD": "django",
-        "HOST": "192.168.22.99",
+        "HOST": "localhost",
         "PORT": "3306",
     }
 }
@@ -126,8 +128,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CSRF_TRUSTED_ORIGINS = ["https://django.devops.com"]
