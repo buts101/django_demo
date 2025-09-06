@@ -1,0 +1,104 @@
+{% extends 'netlab/base.html' %}
+
+{% block title %}NetLab Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Network Lab Dashboard</h2>
+    <p>Testing environment for 4-router network with MPLS and OSPF protocols</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+        <div class="card" style="text-align: center;">
+            <h3>{{ router_count }}</h3>
+            <p>Total Routers</p>
+        </div>
+        <div class="card" style="text-align: center;">
+            <h3>{{ topologies.count }}</h3>
+            <p>Active Topologies</p>
+        </div>
+        <div class="card" style="text-align: center;">
+            <h3>{{ recent_tests.count }}</h3>
+            <p>Recent Tests</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Active Network Topologies</h3>
+    {% if topologies %}
+        {% for topology in topologies %}
+            <div class="card">
+                <h4><a href="{% url 'netlab:topology_detail' topology.id %}">{{ topology.name }}</a></h4>
+                <p>{{ topology.description }}</p>
+                <p><strong>Routers:</strong> {{ topology.get_router_count }}</p>
+                <p><strong>Created:</strong> {{ topology.created_at|date:"M d, Y" }}</p>
+                <a href="{% url 'netlab:topology_detail' topology.id %}" class="btn">View Details</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No active topologies found. Create one in the <a href="/admin/">admin interface</a>.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Available Routers</h3>
+    <div class="router-grid">
+        {% for router in routers %}
+            <div class="card">
+                <h4><a href="{% url 'netlab:router_detail' router.id %}">{{ router.name }}</a></h4>
+                <p><strong>Type:</strong> {{ router.get_router_type_display }}</p>
+                <p><strong>IP:</strong> {{ router.ip_address }}</p>
+                <p><strong>Loopback:</strong> {{ router.loopback_ip }}</p>
+                <p><strong>AS:</strong> {{ router.as_number }}</p>
+                <div>
+                    {% if router.mpls_enabled %}
+                        <span class="status-badge status-completed">MPLS</span>
+                    {% endif %}
+                    {% if router.ospf_enabled %}
+                        <span class="status-badge status-completed">OSPF</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <h3>Recent Test Results</h3>
+    {% if recent_tests %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Test Type</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Source</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Target</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in recent_tests %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.get_test_type_display }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.source_router.name }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.target_router.name|default:"N/A" }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <span class="status-badge status-{{ test.status }}">{{ test.get_status_display }}</span>
+                            {% if test.success is not None %}
+                                {% if test.success %}
+                                    <span class="status-badge status-completed">✓</span>
+                                {% else %}
+                                    <span class="status-badge status-failed">✗</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.created_at|date:"M d, H:i" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No tests have been run yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

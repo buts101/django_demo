@@ -1,0 +1,131 @@
+{% extends 'netlab/base.html' %}
+
+{% block title %}{{ topology.name }} - Topology Detail{% endblock %}
+
+{% block header %}{{ topology.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3>Topology Information</h3>
+    <p><strong>Description:</strong> {{ topology.description }}</p>
+    <p><strong>Created:</strong> {{ topology.created_at|date:"M d, Y H:i" }}</p>
+    <p><strong>Active:</strong> {% if topology.is_active %}Yes{% else %}No{% endif %}</p>
+    <p><strong>Router Count:</strong> {{ routers.count }}</p>
+</div>
+
+<div class="topology-viz">
+    <h3>Network Topology Visualization</h3>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; align-items: center;">
+        {% for router in routers %}
+            <div class="card" style="text-align: center; margin: 10px;">
+                <h4>{{ router.name }}</h4>
+                <p>{{ router.get_router_type_display }}</p>
+                <p>{{ router.ip_address }}</p>
+                {% if router.mpls_enabled %}<span class="status-badge status-completed">MPLS</span>{% endif %}
+                {% if router.ospf_enabled %}<span class="status-badge status-completed">OSPF</span>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    {% if links %}
+        <h4>Network Links</h4>
+        {% for link in links %}
+            <div style="margin: 5px 0; padding: 5px; background-color: white; border-radius: 4px;">
+                {{ link.router_a.name }} ↔ {{ link.router_b.name }} ({{ link.bandwidth }} Mbps)
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Run Network Tests</h3>
+    <form method="post" action="{% url 'netlab:run_test' %}">
+        {% csrf_token %}
+        <input type="hidden" name="topology" value="{{ topology.id }}">
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+            <div>
+                <label>Test Type:</label>
+                <select name="test_type" required style="width: 100%; padding: 5px;">
+                    <option value="ping">Ping Test</option>
+                    <option value="traceroute">Traceroute</option>
+                    <option value="ospf_neighbors">OSPF Neighbors</option>
+                    <option value="mpls_labels">MPLS Labels</option>
+                    <option value="lsp_path">LSP Path</option>
+                </select>
+            </div>
+            
+            <div>
+                <label>Source Router:</label>
+                <select name="source_router" required style="width: 100%; padding: 5px;">
+                    {% for router in routers %}
+                        <option value="{{ router.id }}">{{ router.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label>Target Router (optional):</label>
+                <select name="target_router" style="width: 100%; padding: 5px;">
+                    <option value="">-- Select Target --</option>
+                    {% for router in routers %}
+                        <option value="{{ router.id }}">{{ router.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn">Run Test</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Recent Test Results</h3>
+    {% if tests %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Test Type</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Source</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Target</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Result</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in tests %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.get_test_type_display }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.source_router.name }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.target_router.name|default:"N/A" }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <span class="status-badge status-{{ test.status }}">{{ test.get_status_display }}</span>
+                            {% if test.success is not None %}
+                                {% if test.success %}
+                                    <span class="status-badge status-completed">✓</span>
+                                {% else %}
+                                    <span class="status-badge status-failed">✗</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            {% if test.result %}
+                                <details>
+                                    <summary>View Output</summary>
+                                    <pre style="font-size: 12px; background-color: #f8f9fa; padding: 10px; margin-top: 5px; overflow-x: auto;">{{ test.result }}</pre>
+                                </details>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ test.created_at|date:"M d, H:i" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No tests have been run for this topology yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
