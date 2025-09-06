@@ -1,0 +1,112 @@
+{% extends 'netlab/base.html' %}
+
+{% block title %}{{ router.name }} - Router Detail{% endblock %}
+
+{% block header %}Router: {{ router.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3>Router Information</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+        <div>
+            <p><strong>Name:</strong> {{ router.name }}</p>
+            <p><strong>Type:</strong> {{ router.get_router_type_display }}</p>
+            <p><strong>IP Address:</strong> {{ router.ip_address }}</p>
+            <p><strong>Loopback IP:</strong> {{ router.loopback_ip }}</p>
+        </div>
+        <div>
+            <p><strong>AS Number:</strong> {{ router.as_number }}</p>
+            <p><strong>MPLS Enabled:</strong> {% if router.mpls_enabled %}Yes{% else %}No{% endif %}</p>
+            <p><strong>OSPF Enabled:</strong> {% if router.ospf_enabled %}Yes{% else %}No{% endif %}</p>
+            <p><strong>Created:</strong> {{ router.created_at|date:"M d, Y" }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Network Interfaces</h3>
+    {% if interfaces %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Interface</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">IP Address</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Subnet Mask</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">OSPF Area</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">MPLS Label</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for interface in interfaces %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ interface.interface_name }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ interface.ip_address }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ interface.subnet_mask }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ interface.ospf_area }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ interface.mpls_label|default:"N/A" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No interfaces configured for this router.</p>
+    {% endif %}
+</div>
+
+{% if ospf_config %}
+<div class="card">
+    <h3>OSPF Configuration</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+        <div>
+            <p><strong>Process ID:</strong> {{ ospf_config.process_id }}</p>
+            <p><strong>Router ID:</strong> {{ ospf_config.router_id }}</p>
+            <p><strong>Area:</strong> {{ ospf_config.area }}</p>
+        </div>
+        <div>
+            <p><strong>Network Statements:</strong></p>
+            {% if ospf_config.get_networks %}
+                <ul>
+                    {% for network in ospf_config.get_networks %}
+                        <li>{{ network }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No network statements configured.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if mpls_config %}
+<div class="card">
+    <h3>MPLS Configuration</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+        <div>
+            <p><strong>LDP Router ID:</strong> {{ mpls_config.ldp_router_id }}</p>
+        </div>
+        <div>
+            <p><strong>Label Range:</strong> {{ mpls_config.label_range_min }} - {{ mpls_config.label_range_max }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not ospf_config and router.ospf_enabled %}
+<div class="card" style="background-color: #fff3cd; border-color: #ffeaa7;">
+    <h4>⚠️ OSPF Configuration Missing</h4>
+    <p>This router has OSPF enabled but no configuration is found. Please configure OSPF in the admin interface.</p>
+</div>
+{% endif %}
+
+{% if not mpls_config and router.mpls_enabled %}
+<div class="card" style="background-color: #fff3cd; border-color: #ffeaa7;">
+    <h4>⚠️ MPLS Configuration Missing</h4>
+    <p>This router has MPLS enabled but no configuration is found. Please configure MPLS in the admin interface.</p>
+</div>
+{% endif %}
+
+<div class="card">
+    <a href="{% url 'netlab:index' %}" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}

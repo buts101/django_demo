@@ -34,6 +34,7 @@ ALLOWED_HOSTS = ["localhost", "django.devops.com","192.168.22.99"]
 
 INSTALLED_APPS = [
     "polls.apps.PollsConfig",
+    "netlab.apps.NetlabConfig",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
